@@ -26,8 +26,10 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users
 connection.commit()
 
 def open_frame(frame):
-    dict_frame.pack_forget()
+    login_frame.pack_forget()
+    register_frame.pack_forget()
     menu_frame.pack_forget()
+    dict_frame.pack_forget()
     learn_frame.pack_forget()
     card_frame.pack_forget()
 
@@ -142,6 +144,31 @@ def speak_flashcard_word():
     else:
         messagebox.showinfo('Flashcards', 'No Word available to pronounce')
 
+# register frame
+register_frame = tk.Frame(root)
+
+register_label = tk.Label(register_frame, text='Register')
+register_username_label = tk.Label(register_frame, text='Username:')
+register_username_entry = tk.Entry(register_frame)
+register_password_label = tk.Label(register_frame, text='Password:')
+register_password_entry = tk.Entry(register_frame, show="*")
+repeat_password_label = tk.Label(register_frame, text='Repeat Password:')
+repeat_password_entry = tk.Entry(register_frame, show="*")
+register_button = tk.Button(register_frame, text='Register', bg='green', fg='white')
+have_account_label = tk.Label(register_frame, text="Already have an account? Login here.")
+have_account_login_button = tk.Button(register_frame, text='Login', bg='gold', fg='white', command=lambda: open_frame(login_frame))
+
+register_label.pack()
+register_username_label.pack()
+register_username_entry.pack()
+register_password_label.pack()
+register_password_entry.pack()
+repeat_password_label.pack()
+repeat_password_entry.pack()
+register_button.pack()
+have_account_label.pack()
+have_account_login_button.pack()
+
 # login frame
 login_frame = tk.Frame(root)
 
@@ -152,7 +179,7 @@ password_label = tk.Label(login_frame, text='Password:')
 password_entry = tk.Entry(login_frame, show="*")
 login_button = tk.Button(login_frame, text='Login', bg='green', fg='white')
 no_account_label = tk.Label(login_frame, text="Don't have an account? Register here.")
-no_account_register_button = tk.Button(login_frame, text='Register', bg='gold', fg='white')
+no_account_register_button = tk.Button(login_frame, text='Register', bg='gold', fg='white', command=lambda: open_frame(register_frame))
 
 login_frame.pack(fill='both', expand=True)
 login_label.pack()
