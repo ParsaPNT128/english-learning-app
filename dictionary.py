@@ -15,7 +15,6 @@ engine = pyttsx3.init()
 root = tk.Tk()
 root.title('English Application')
 root.geometry('600x400')
-root.resizable(False, False)
 
 connection = sqlite3.connect("user_data.db")
 cursor = connection.cursor()
@@ -24,6 +23,55 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS users
                (username TEXT PRIMARY KEY, password TEXT NOT NULL, email TEXT NOT NULL)''')
 
 connection.commit()
+
+def register_user():
+    username = register_username_entry.get().strip()
+    password = register_password_entry.get().strip()
+    email = email_entry.get().strip()
+    if not username or not password or not email:
+        messagebox.showerror('Input Error', 'All fields are required.')
+        return
+    if not username.isalnum():
+        messagebox.showerror('Input Error', 'Username must contain only letters and numbers')
+
+    if not password.isalnum():
+        messagebox.showerror('Input Error', 'Password must contain only letters and numbers')
+
+    if not re.match(r"^\S+@\S+\.\S+$", email):
+        messagebox.showerror('Input Error', 'Invalid email format')
+
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    if cursor.fetchone():
+        messagebox.showerror('Registeration Error', 'Username already exists')
+
+    cursor.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', (username, password, email))
+
+    connection.commit()
+    messagebox.showinfo('Success', 'Rgisteration successful you can now login')
+
+    open_frame(login_frame)
+
+def login_user():
+    username = username_entry.get().strip()
+    password = password_entry.get().strip()
+
+    if not username or not password:
+        messagebox.showerror('Input Error', 'All fields are required.')
+        return
+    
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+
+    if not user:
+        messagebox.showerror('Login Error', 'Invalid username')
+    else:
+        cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, password))
+        passw = cursor.fetchone()
+
+        if not passw:
+            messagebox.showerror('Login Error', 'Incorrect password')
+        else:
+            open_frame(menu_frame)
 
 def open_frame(frame):
     login_frame.pack_forget()
@@ -152,9 +200,9 @@ register_username_label = tk.Label(register_frame, text='Username:')
 register_username_entry = tk.Entry(register_frame)
 register_password_label = tk.Label(register_frame, text='Password:')
 register_password_entry = tk.Entry(register_frame, show="*")
-repeat_password_label = tk.Label(register_frame, text='Repeat Password:')
-repeat_password_entry = tk.Entry(register_frame, show="*")
-register_button = tk.Button(register_frame, text='Register', bg='green', fg='white')
+email_label = tk.Label(register_frame, text='Email:')
+email_entry = tk.Entry(register_frame)
+register_button = tk.Button(register_frame, text='Register', bg='green', fg='white', command=register_user)
 have_account_label = tk.Label(register_frame, text="Already have an account? Login here.")
 have_account_login_button = tk.Button(register_frame, text='Login', bg='gold', fg='white', command=lambda: open_frame(login_frame))
 
@@ -163,8 +211,8 @@ register_username_label.pack()
 register_username_entry.pack()
 register_password_label.pack()
 register_password_entry.pack()
-repeat_password_label.pack()
-repeat_password_entry.pack()
+email_label.pack()
+email_entry.pack()
 register_button.pack()
 have_account_label.pack()
 have_account_login_button.pack()
@@ -177,7 +225,7 @@ username_label = tk.Label(login_frame, text='Username:')
 username_entry = tk.Entry(login_frame)
 password_label = tk.Label(login_frame, text='Password:')
 password_entry = tk.Entry(login_frame, show="*")
-login_button = tk.Button(login_frame, text='Login', bg='green', fg='white')
+login_button = tk.Button(login_frame, text='Login', bg='green', fg='white', command=login_user)
 no_account_label = tk.Label(login_frame, text="Don't have an account? Register here.")
 no_account_register_button = tk.Button(login_frame, text='Register', bg='gold', fg='white', command=lambda: open_frame(register_frame))
 
