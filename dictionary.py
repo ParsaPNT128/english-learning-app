@@ -131,6 +131,7 @@ def open_notebook():
 def toggle_mode():
     """Switch between light and dark modes."""
     global dark_mode
+    
     dark_mode = not dark_mode
     if dark_mode:
         root.configure(bg='#2b2b2b')
