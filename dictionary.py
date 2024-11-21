@@ -1,6 +1,7 @@
 import nltk
 from nltk.corpus import wordnet as wn
 from tkinter import *
+from tkinter import ttk
 from tkinter import messagebox, PhotoImage, scrolledtext
 import tkinter as tk
 import random
@@ -88,8 +89,42 @@ def open_frame(frame):
     learn_frame.pack_forget()
     card_frame.pack_forget()
     notebook_frame.pack_forget()
+    change_username_frame.pack_forget()
 
+    nav_bar_frame.pack(fill="x", side='top')
     frame.pack(fill='both', expand=True)
+
+    if frame == menu_frame:
+        back_button.pack_forget()
+    else:
+        mode_button.pack_forget()
+        back_button.pack(side='left', padx=10, pady=5)
+        mode_button.pack(side='left', padx=10, pady=5)
+
+def change_username():
+    username = new_username_entry.get()
+    password = change_username_password_entry.get()
+
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    if cursor.fetchone():
+        messagebox.showerror('Input Error', 'Username already exists.')
+        return
+    
+    cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username_entry.get(), password))
+    if cursor.fetchall():
+        cursor.execute('UPDATE users SET username = ? WHERE username = ?', (username, username_entry.get()))
+        connection.commit()
+
+        messagebox.showinfo('Success', 'Username successfully changed.')
+
+        open_frame(menu_frame)
+
+def selection_changed(event):
+    selection = account_button.get()
+    account_button.set('My Account')
+    if selection == 'Change Username':
+        open_frame(change_username_frame)
+    
 
 def open_notebook():
     for i in notebook_content_frame.winfo_children():
@@ -127,7 +162,6 @@ def open_notebook():
         
     open_frame(notebook_frame)
 
-
 def toggle_mode():
     """Switch between light and dark modes."""
     global dark_mode
@@ -135,42 +169,76 @@ def toggle_mode():
     dark_mode = not dark_mode
     if dark_mode:
         root.configure(bg='#2b2b2b')
+        menu_frame.configure(bg='#2b2b2b')
+        menu_button_frame.configure(bg='#2b2b2b')
+        button_frame.configure(bg='#2b2b2b')
+        entry_frame.configure(bg='#2b2b2b')
         dict_frame.configure(bg='#2b2b2b')
-        nav_bar_frame.configure(bg='#444444')
+        nav_bar_frame.configure(bg='#FF5722')
         card_frame.configure(bg='#2b2b2b')
+        card_button_frame.configure(bg='#2b2b2b')
         learn_frame.configure(bg='#2b2b2b')
         notebook_frame.configure(bg='#2b2b2b')
+        change_username_frame.configure(bg='#2b2b2b')
         
         # Update widgets to dark mode
         menu_label.config(bg='#2b2b2b', fg='white')
         title_label.config(bg='#2b2b2b', fg='white')
+        input_label.config(bg='#2b2b2b', fg='white')
         card_label.config(bg='#2b2b2b', fg='white')
+        more_feature_label.config(bg='#2b2b2b', fg='white')
+        learn_speak_word_button.config(bg='#2b2b2b', fg='white')
+        learn_next_word_button.config(bg='#2b2b2b', fg='white')
         learn_label.config(bg='#2b2b2b', fg='white')
         word_entry.config(bg='#555555', fg='white')
         text_area.config(bg='#555555', fg='white')
         flashcard_label.config(bg='#555555', fg='white')
-
+        notebook_label.config(bg='#555555', fg='white')
+        back_button.config(bg='#FF5722', fg='black')
+        change_username_label.config(bg='#2b2b2b', fg='white')
+        new_username_label.config(bg='#2b2b2b', fg='white')
+        new_username_entry.config(bg='#2b2b2b', fg='white')
+        change_username_password_label.config(bg='#2b2b2b', fg='white')
+        change_username_password_entry.config(bg='#2b2b2b', fg='white')
+    
         # Update button text
-        mode_button.config(text="Light Mode", bg='#555555', fg='white')
+        mode_button.config(text="Light Mode", bg='#FF5722', fg='black')
     else:
         root.configure(bg='#f0f0f0')
+        menu_frame.configure(bg='#f0f0f0')
+        menu_button_frame.configure(bg='#f0f0f0')
+        button_frame.configure(bg='#f0f0f0')
+        entry_frame.configure(bg='#f0f0f0')
         dict_frame.configure(bg='#f0f0f0')
-        nav_bar_frame.configure(bg='#FF5722')
+        nav_bar_frame.configure(bg='#FFA500')
         card_frame.configure(bg='#f0f0f0')
+        card_button_frame.configure(bg='#f0f0f0')
         learn_frame.configure(bg='#f0f0f0')
         notebook_frame.configure(bg='#f0f0f0')
+        change_username_frame.configure(bg='#f0f0f0')
 
         # Update widgets to light mode
         menu_label.config(bg='#f0f0f0', fg='black')
         title_label.config(bg='#f0f0f0', fg='black')
+        input_label.config(bg='#f0f0f0', fg='black')
         card_label.config(bg='#f0f0f0', fg='black')
+        more_feature_label.config(bg='#f0f0f0', fg='black')
+        learn_speak_word_button.config(bg='#f0f0f0', fg='black')
+        learn_next_word_button.config(bg='#f0f0f0', fg='black')
         learn_label.config(bg='#f0f0f0', fg='black')
         word_entry.config(bg='white', fg='black')
         text_area.config(bg='white', fg='black')
         flashcard_label.config(bg='white', fg='black')
+        notebook_label.config(bg='white', fg='black')
+        back_button.config(bg='#FFA500', fg='black')
+        change_username_label.config(bg='#f0f0f0', fg='black')
+        new_username_label.config(bg='#f0f0f0', fg='black')
+        new_username_entry.config(bg='#f0f0f0', fg='black')
+        change_username_password_label.config(bg='#f0f0f0', fg='black')
+        change_username_password_entry.config(bg='#f0f0f0', fg='black')
 
         # Update button text
-        mode_button.config(text="Dark Mode", bg='#FF5722', fg='black')
+        mode_button.config(text="Dark Mode", bg='#FFA500', fg='black')
 
 def record():
     recognizer = sr.Recognizer()
@@ -302,6 +370,18 @@ def speak_flashcard_word():
     else:
         messagebox.showinfo('Flashcards', 'No Word available to pronounce')
 
+# navbar frame
+
+nav_bar_frame = tk.Frame(root, bg='#FFA500', height=40)
+back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
+mode_button = tk.Button(nav_bar_frame, text='Dark Mode', bg='#FFA500', fg='#000000', command=toggle_mode)
+account_button = ttk.Combobox(nav_bar_frame, state="readonly", values=['Change Username'])
+account_button.set('My Account')
+account_button.bind("<<ComboboxSelected>>", selection_changed)
+
+back_button.pack(side='left', padx=10, pady=5)
+mode_button.pack(side='left', padx=10, pady=5)
+account_button.pack(side='right', padx=10, pady=5)
 
 # register frame
 register_frame = tk.Frame(root)
@@ -359,8 +439,8 @@ menu_frame = tk.Frame(root)
 menu_label = tk.Label(menu_frame, text='Welcome To English Learning Application!', font=("Helvetica", 20, "bold"))
 menu_button_frame = tk.Frame(menu_frame)
 dict_button = tk.Button(menu_button_frame, text='Dictionary', bg='#FFA500', fg='#FFFFFF', font=('Helvetica', 16, 'bold'), width=15, command=lambda: open_frame(dict_frame))
-learn_button = tk.Button(menu_button_frame, text='Learn English', bg='#00FFFF', fg='#FFFFFF', font=('Helvetica', 16, 'bold'), width=15, command=lambda: open_frame(learn_frame))
-notebook_button = tk.Button(menu_button_frame, text='Notebook', bg='#BF40BF', fg='#FFFFFF', font=('Helvetica', 16, 'bold'), width=15, command=open_notebook)
+learn_button = tk.Button(menu_button_frame, text='Learn English', bg='#03A9F4', fg='#FFFFFF', font=('Helvetica', 16, 'bold'), width=15, command=lambda: open_frame(learn_frame))
+notebook_button = tk.Button(menu_button_frame, text='Notebook', bg='#9C27B0', fg='#FFFFFF', font=('Helvetica', 16, 'bold'), width=15, command=open_notebook)
 
 #bg_label.place(relwidth=1, relheight=1)
 menu_label.pack(pady=25)
@@ -369,12 +449,25 @@ dict_button.pack(pady=10)
 learn_button.pack(pady=10)
 notebook_button.pack(pady=10)
 
+# change username frame
+change_username_frame = tk.Frame(root)
+
+change_username_label = tk.Label(change_username_frame, text='Change Username', font=("Arial", 24, "bold"))
+new_username_label = tk.Label(change_username_frame, text='New Username:', font=("Arial", 12))
+new_username_entry = tk.Entry(change_username_frame, font=('Arial', 10), width=25)
+change_username_password_label = tk.Label(change_username_frame, text='Password:', font=('Arial', 12))
+change_username_password_entry = tk.Entry(change_username_frame, show="*", font=('Arial', 10), width=25)
+change_username_button = tk.Button(change_username_frame, text='Change', bg='#8BC34A', fg='#FFFFFF', font=('Arial', 12, 'bold'), width=10, command=change_username)
+
+change_username_label.pack()
+new_username_label.pack(pady=(15, 5))
+new_username_entry.pack()
+change_username_password_label.pack(pady=(10, 5))
+change_username_password_entry.pack()
+change_username_button.pack(pady=20)
+
 # dictionary frame
 dict_frame = tk.Frame(root)
-
-nav_bar_frame = tk.Frame(dict_frame, bg='#FFA500', height=40)
-back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
-mode_button = tk.Button(nav_bar_frame, text='Dark Mode', bg='#FFA500', fg='#000000', command=toggle_mode)
 
 title_label = tk.Label(dict_frame, text='Word Meaning And Pronunciation', font=('Helvetica', 16, 'bold'), bg='#F0F0F0')
 
@@ -392,9 +485,6 @@ speak_info_button = tk.Button(button_frame, text="Pronunciation Info", font=("Ar
 save_notebook_button = tk.Button(button_frame, text="Save To Notebook", font=("Arial", 12), bg="#9C27B0", fg="white", width=15, command=save_to_notebook)
 text_area = scrolledtext.ScrolledText(dict_frame, wrap=tk.WORD, width=80, height=15, font=('Arial', 11))
 
-nav_bar_frame.pack(fill="x", side='top')
-back_button.pack(side='left', padx=10, pady=5)
-mode_button.pack(side='left', padx=10, pady=5)
 title_label.pack(pady=5)
 entry_frame.pack(pady=10)
 input_label.grid(row=0, column=0)
@@ -410,24 +500,16 @@ text_area.pack(padx=10, pady=10)
 # learn frame
 learn_frame = tk.Frame(root)
 
-nav_bar_frame = tk.Frame(learn_frame, bg='#FFA500', height=40)
-back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
-
 learn_label = tk.Label(learn_frame, text='Learning English', font=('Helvetica', 16, 'bold'), bg='#F0F0F0')
 learn_button = tk.Button(learn_frame, text='Learn Vocabulary', bg='#4CAF50', fg='#FFFFFF', font=('Helvetica', 12, 'bold'), width=20, command=learn_vocab)
 more_feature_label = tk.Label(learn_frame, text='More features coming soon...')
 
-nav_bar_frame.pack(fill="x", side='top')
-back_button.pack(side='left', padx=10, pady=5)
 learn_label.pack(pady=10)
 learn_button.pack(pady=10)
 more_feature_label.pack()
 
 # flashcard frame
 card_frame = tk.Frame(root)
-
-nav_bar_frame = tk.Frame(card_frame, bg='#FFA500', height=40)
-back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
 
 card_label = tk.Label(card_frame, text='Flashcards: Learn Vocabulary', font=('Helvetica', 16, 'bold'), bg='#F0F0F0')
 flashcard_text = tk.StringVar(card_frame)
@@ -436,8 +518,6 @@ card_button_frame = tk.Frame(card_frame)
 learn_speak_word_button = tk.Button(card_button_frame, text='Pronounce Word', command=speak_flashcard_word)
 learn_next_word_button = tk.Button(card_button_frame, text='Next Word', command=next_word)
 
-nav_bar_frame.pack(fill="x", side='top')
-back_button.pack(side='left', padx=10, pady=5)
 card_label.pack()
 flashcard_label.pack(pady=10)
 card_button_frame.pack(pady=10)
@@ -446,10 +526,6 @@ learn_next_word_button.grid(row=0, column=1, padx=10, pady=10)
 
 # notebook frame
 notebook_frame = tk.Frame(root, bg="#F0F0F0")
-
-nav_bar_frame = tk.Frame(notebook_frame, bg='#FFA500', height=40)
-back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
-mode_button = tk.Button(nav_bar_frame, text='Dark Mode', bg='#FFA500', fg='#000000', command=toggle_mode)
 
 notebook_label = tk.Label(notebook_frame, text="My Notebook")
 canvas = tk.Canvas(notebook_frame, bg="#F0F0F0")
@@ -464,9 +540,6 @@ def update_scrollregion(event):
 
 notebook_content_frame.bind(notebook_content_frame.bind("<Configure>", update_scrollregion))
 
-nav_bar_frame.pack(fill="x", side="top")
-back_button.pack(side="left", padx=10, pady=5)
-mode_button.pack(side='left', padx=10, pady=5)
 notebook_label.pack(pady=20)
 notebook_scrollbar.pack(side="right", fill="y")
 canvas.pack(fill="both", expand=True, pady=10, padx=10)
