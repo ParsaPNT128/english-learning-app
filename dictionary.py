@@ -2,7 +2,7 @@ import nltk
 from nltk.corpus import wordnet as wn
 from tkinter import *
 from tkinter import ttk
-from tkinter import messagebox, PhotoImage, scrolledtext
+from tkinter import messagebox, PhotoImage, scrolledtext, filedialog
 import tkinter as tk
 import random
 import speech_recognition as sr
@@ -10,6 +10,8 @@ import pyttsx3
 import sqlite3
 import re
 import random
+import os
+import shutil
 #nltk.download('wordnet')
 
 # main window
@@ -25,7 +27,7 @@ connection = sqlite3.connect("user_data.db")
 cursor = connection.cursor()
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS users
-               (username TEXT PRIMARY KEY, password TEXT NOT NULL, email TEXT NOT NULL)''')
+               (username TEXT PRIMARY KEY, password TEXT NOT NULL, email TEXT NOT NULL, picture TEXT NO NULL)''')
 
 cursor.execute('''CREATE TABLE IF NOT EXISTS notebook
                 (username TEXT, word TEXT, word_info TEXT, FOREIGN KEY (username) REFERENCES users(username))''')
@@ -33,6 +35,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS notebook
 connection.commit()
 
 def register_user():
+    global pfp_label, pfp_image
     username = register_username_entry.get().strip()
     password = register_password_entry.get().strip()
     email = email_entry.get().strip()
@@ -52,14 +55,23 @@ def register_user():
     if cursor.fetchone():
         messagebox.showerror('Registeration Error', 'Username already exists')
 
-    cursor.execute('INSERT INTO users (username, password, email) VALUES (?, ?, ?)', (username, password, email))
+    cursor.execute('INSERT INTO users (username, password, email, picture) VALUES (?, ?, ?, ?)', (username, password, email, 'default.jpg'))
 
     connection.commit()
+
+    pfp_image = PhotoImage(file='profiles/default.jpg')
+    pfp_image = pfp_image.subsample(8, 8)
+    pfp_label = tk.Label(nav_bar_frame, image=pfp_image)
+
+    pfp_label.pack(side='right', padx=10, pady=5)
+    account_button.pack(side='right', pady=5)
+
     messagebox.showinfo('Success', 'Rgisteration successful you can now login')
 
     open_frame(login_frame)
 
 def login_user():
+    global pfp_label, pfp_image
     username = username_entry.get().strip()
     password = password_entry.get().strip()
 
@@ -79,6 +91,16 @@ def login_user():
         if not passw:
             messagebox.showerror('Login Error', 'Incorrect password')
         else:
+            cursor.execute('SELECT picture FROM users WHERE username = ?', (username_entry.get(),))
+            picture = cursor.fetchone()[0]
+
+            pfp_image = PhotoImage(file=f'profiles/{picture}')
+            pfp_image = pfp_image.subsample(8, 8)
+            pfp_label = tk.Label(nav_bar_frame, image=pfp_image)
+
+            pfp_label.pack(side='right', padx=10, pady=5)
+            account_button.pack(side='right', pady=5)
+            
             open_frame(menu_frame)
 
 def open_frame(frame):
@@ -90,8 +112,11 @@ def open_frame(frame):
     card_frame.pack_forget()
     notebook_frame.pack_forget()
     change_username_frame.pack_forget()
-
+    
     nav_bar_frame.pack(fill="x", side='top')
+    if frame == login_frame or frame == register_frame:
+        nav_bar_frame.pack_forget()
+        
     frame.pack(fill='both', expand=True)
 
     if frame == menu_frame:
@@ -119,12 +144,40 @@ def change_username():
 
         open_frame(menu_frame)
 
+def change_pfp():
+    global pfp_label, pfp_image
+    path = filedialog.askopenfilename(
+        title='Select files',
+        filetypes=[("Image files", "*.jpg. *.jpeg *.png")]
+    )
+
+    cursor.execute('SELECT picture FROM users WHERE username = ?', (username_entry.get(),))
+    picture = cursor.fetchone()[0]
+
+    if picture == 'default.jpg':
+        picture = f'{random.randint(10000000000, 99999999999)}.png'
+
+    dest = shutil.copyfile(path, f'profiles/{picture}')
+
+    cursor.execute('UPDATE users SET picture = ? WHERE username = ?', (picture, username_entry.get()))
+    connection.commit()
+
+    pfp_image = PhotoImage(file=f'profiles/{picture}')
+    pfp_image = pfp_image.subsample(8, 8)
+    account_button.pack_forget()
+    pfp_label.pack_forget()
+    pfp_label = tk.Label(nav_bar_frame, image=pfp_image)
+
+    pfp_label.pack(side='right', padx=10, pady=5)
+    account_button.pack(side='right', pady=5)
+
 def selection_changed(event):
     selection = account_button.get()
     account_button.set('My Account')
     if selection == 'Change Username':
         open_frame(change_username_frame)
-    
+    if selection == 'Profile Picture':
+        change_pfp()
 
 def open_notebook():
     for i in notebook_content_frame.winfo_children():
@@ -375,13 +428,13 @@ def speak_flashcard_word():
 nav_bar_frame = tk.Frame(root, bg='#FFA500', height=40)
 back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
 mode_button = tk.Button(nav_bar_frame, text='Dark Mode', bg='#FFA500', fg='#000000', command=toggle_mode)
-account_button = ttk.Combobox(nav_bar_frame, state="readonly", values=['Change Username'])
+account_button = ttk.Combobox(nav_bar_frame, state="readonly", values=['Change Username', 'Profile Picture'])
+
 account_button.set('My Account')
 account_button.bind("<<ComboboxSelected>>", selection_changed)
 
 back_button.pack(side='left', padx=10, pady=5)
 mode_button.pack(side='left', padx=10, pady=5)
-account_button.pack(side='right', padx=10, pady=5)
 
 # register frame
 register_frame = tk.Frame(root)
