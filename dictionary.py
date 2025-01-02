@@ -11,6 +11,7 @@ import sqlite3
 import re
 import random
 import os
+from PIL import ImageTk, Image
 import shutil
 #nltk.download('wordnet')
 
@@ -33,6 +34,23 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS notebook
                 (username TEXT, word TEXT, word_info TEXT, FOREIGN KEY (username) REFERENCES users(username))''')
 
 connection.commit()
+
+def resize_image(image: Image, length: int) -> Image:
+    if image.size[0] < image.size[1]:
+        resized_image = image.resize((length, int(image.size[1] * (length / image.size[0]))))
+        required_loss = (resized_image.size[1] - length)
+        resized_image = resized_image.crop(
+            box=(0, required_loss / 2, length, resized_image.size[1] - required_loss / 2))
+
+        return resized_image
+    else:
+        resized_image = image.resize((int(image.size[0] * (length / image.size[1])), length))
+        required_loss = resized_image.size[0] - length
+
+        resized_image = resized_image.crop(
+            box=(required_loss / 2, 0, resized_image.size[0] - required_loss / 2, length))
+
+        return resized_image
 
 def register_user():
     global pfp_label, pfp_image
@@ -94,8 +112,11 @@ def login_user():
             cursor.execute('SELECT picture FROM users WHERE username = ?', (username_entry.get(),))
             picture = cursor.fetchone()[0]
 
-            pfp_image = PhotoImage(file=f'profiles/{picture}')
-            pfp_image = pfp_image.subsample(8, 8)
+            pfp_image = Image.open(f'profiles/{picture}').convert("RGBA")
+            w, h = pfp_image.size
+            pfp_image = resize_image(pfp_image, int(w/2))
+            pfp_image = pfp_image.resize((30, 30))
+            pfp_image = ImageTk.PhotoImage(pfp_image)
             pfp_label = tk.Label(nav_bar_frame, image=pfp_image)
 
             pfp_label.pack(side='right', padx=10, pady=5)
@@ -112,6 +133,7 @@ def open_frame(frame):
     card_frame.pack_forget()
     notebook_frame.pack_forget()
     change_username_frame.pack_forget()
+    change_password_frame.pack_forget()
     
     nav_bar_frame.pack(fill="x", side='top')
     if frame == login_frame or frame == register_frame:
@@ -143,6 +165,31 @@ def change_username():
         messagebox.showinfo('Success', 'Username successfully changed.')
 
         open_frame(menu_frame)
+        return
+    
+    messagebox.showerror('Login Error', 'Incorrect password')
+
+
+def change_password():
+    password = change_password_entry.get()
+    new_password = new_password_entry.get()
+    repeat_new_password = repeat_new_password_entry.get()
+
+    if new_password != repeat_new_password:
+        messagebox.showerror('Input error', "'New Password' and 'Repeat New Password' don't match.")
+        return
+
+    cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username_entry.get(), password))
+    if cursor.fetchall():
+        cursor.execute('UPDATE users SET password = ? WHERE username = ?', (new_password, username_entry.get()))
+        connection.commit()
+
+        messagebox.showinfo('Success', 'Password successfully changed.')
+
+        open_frame(menu_frame)
+        return
+    
+    messagebox.showerror('Login Error', 'Incorrect password')
 
 def change_pfp():
     global pfp_label, pfp_image
@@ -162,8 +209,11 @@ def change_pfp():
     cursor.execute('UPDATE users SET picture = ? WHERE username = ?', (picture, username_entry.get()))
     connection.commit()
 
-    pfp_image = PhotoImage(file=f'profiles/{picture}')
-    pfp_image = pfp_image.subsample(8, 8)
+    pfp_image = Image.open(f'profiles/{picture}').convert("RGBA")
+    w, h = pfp_image.size
+    pfp_image = resize_image(pfp_image, int(w/2))
+    pfp_image = pfp_image.resize((30, 30))
+    pfp_image = ImageTk.PhotoImage(pfp_image)
     account_button.pack_forget()
     pfp_label.pack_forget()
     pfp_label = tk.Label(nav_bar_frame, image=pfp_image)
@@ -176,6 +226,8 @@ def selection_changed(event):
     account_button.set('My Account')
     if selection == 'Change Username':
         open_frame(change_username_frame)
+    if selection == 'Change Password':
+        open_frame(change_password_frame)
     if selection == 'Profile Picture':
         change_pfp()
 
@@ -233,6 +285,7 @@ def toggle_mode():
         learn_frame.configure(bg='#2b2b2b')
         notebook_frame.configure(bg='#2b2b2b')
         change_username_frame.configure(bg='#2b2b2b')
+        change_password_frame.configure(bg='#2b2b2b')
         
         # Update widgets to dark mode
         menu_label.config(bg='#2b2b2b', fg='white')
@@ -253,6 +306,13 @@ def toggle_mode():
         new_username_entry.config(bg='#2b2b2b', fg='white')
         change_username_password_label.config(bg='#2b2b2b', fg='white')
         change_username_password_entry.config(bg='#2b2b2b', fg='white')
+        change_password_frame_label.config(bg='#2b2b2b', fg='white')
+        new_password_label.config(bg='#2b2b2b', fg='white')
+        new_password_entry.config(bg='#2b2b2b', fg='white')
+        repeat_new_password_label.config(bg='#2b2b2b', fg='white')
+        repeat_new_password_entry.config(bg='#2b2b2b', fg='white')
+        change_password_label.config(bg='#2b2b2b', fg='white')
+        change_password_entry.config(bg='#2b2b2b', fg='white')
     
         # Update button text
         mode_button.config(text="Light Mode", bg='#FF5722', fg='black')
@@ -269,6 +329,7 @@ def toggle_mode():
         learn_frame.configure(bg='#f0f0f0')
         notebook_frame.configure(bg='#f0f0f0')
         change_username_frame.configure(bg='#f0f0f0')
+        change_password_frame.configure(bg='#f0f0f0')
 
         # Update widgets to light mode
         menu_label.config(bg='#f0f0f0', fg='black')
@@ -289,6 +350,13 @@ def toggle_mode():
         new_username_entry.config(bg='#f0f0f0', fg='black')
         change_username_password_label.config(bg='#f0f0f0', fg='black')
         change_username_password_entry.config(bg='#f0f0f0', fg='black')
+        change_password_frame_label.config(bg='#f0f0f0', fg='black')
+        new_password_label.config(bg='#f0f0f0', fg='black')
+        new_password_entry.config(bg='#f0f0f0', fg='black')
+        repeat_new_password_label.config(bg='#f0f0f0', fg='black')
+        repeat_new_password_entry.config(bg='#f0f0f0', fg='black')
+        change_password_label.config(bg='#f0f0f0', fg='black')
+        change_password_entry.config(bg='#f0f0f0', fg='black')
 
         # Update button text
         mode_button.config(text="Dark Mode", bg='#FFA500', fg='black')
@@ -428,7 +496,7 @@ def speak_flashcard_word():
 nav_bar_frame = tk.Frame(root, bg='#FFA500', height=40)
 back_button = tk.Button(nav_bar_frame, text='Back To Menu', bg='#FFA500', command=lambda: open_frame(menu_frame))
 mode_button = tk.Button(nav_bar_frame, text='Dark Mode', bg='#FFA500', fg='#000000', command=toggle_mode)
-account_button = ttk.Combobox(nav_bar_frame, state="readonly", values=['Change Username', 'Profile Picture'])
+account_button = ttk.Combobox(nav_bar_frame, state="readonly", values=['Change Username', 'Change Password', 'Profile Picture'])
 
 account_button.set('My Account')
 account_button.bind("<<ComboboxSelected>>", selection_changed)
@@ -518,6 +586,27 @@ new_username_entry.pack()
 change_username_password_label.pack(pady=(10, 5))
 change_username_password_entry.pack()
 change_username_button.pack(pady=20)
+
+# change password frame
+change_password_frame = tk.Frame(root)
+
+change_password_frame_label = tk.Label(change_password_frame, text='Change Password', font=("Arial", 24, "bold"))
+change_password_label = tk.Label(change_password_frame, text='Password:', font=('Arial', 12))
+change_password_entry = tk.Entry(change_password_frame, show="*", font=('Arial', 10), width=25)
+new_password_label = tk.Label(change_password_frame, text='New password:', font=("Arial", 12))
+new_password_entry = tk.Entry(change_password_frame, show="*", font=('Arial', 10), width=25)
+repeat_new_password_label = tk.Label(change_password_frame, text='Repeat New password:', font=("Arial", 12))
+repeat_new_password_entry = tk.Entry(change_password_frame, show="*", font=('Arial', 10), width=25)
+change_password_button = tk.Button(change_password_frame, text='Change', bg='#8BC34A', fg='#FFFFFF', font=('Arial', 12, 'bold'), width=10, command=change_password)
+
+change_password_frame_label.pack()
+change_password_label.pack(pady=(15, 5))
+change_password_entry.pack()
+new_password_label.pack(pady=(10, 5))
+new_password_entry.pack()
+repeat_new_password_label.pack(pady=(10, 5))
+repeat_new_password_entry.pack()
+change_password_button.pack(pady=20)
 
 # dictionary frame
 dict_frame = tk.Frame(root)
